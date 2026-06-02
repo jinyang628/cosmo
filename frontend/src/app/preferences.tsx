@@ -29,7 +29,7 @@ const integrationRows = [
   },
 ] as const;
 
-export default function SignalsScreen() {
+export default function PreferencesScreen() {
   const theme = useTheme();
   const safeAreaInsets = useSafeAreaInsets();
   const [selectedPreferences, setSelectedPreferences] = useState(() => new Set(['Open now']));
@@ -62,7 +62,7 @@ export default function SignalsScreen() {
                 TASTE PROFILE
               </ThemedText>
               <ThemedText type="subtitle" style={styles.title}>
-                Signals
+                Preferences
               </ThemedText>
             </View>
             <View style={[styles.scoreBadge, { backgroundColor: theme.backgroundElement }]}>

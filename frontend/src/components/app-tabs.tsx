@@ -15,16 +15,16 @@ export default function AppTabs() {
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Eat</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
+          sf="fork.knife"
+          md="restaurant"
         />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Signals</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Preferences</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
+          sf="slider.horizontal.3"
+          md="tune"
         />
       </NativeTabs.Trigger>
     </NativeTabs>
