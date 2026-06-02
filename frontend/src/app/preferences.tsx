@@ -64,9 +64,7 @@ export default function PreferencesScreen() {
           <PreferencePanel
             label="Distance"
             value={formatDistance(distanceMeters)}
-            detail={`${formatDistance(DISTANCE_MIN_METERS)} - ${formatDistance(
-              DISTANCE_MAX_METERS
-            )}`}>
+          >
             <RangeSlider
               value={distanceProgress}
               onChange={setDistanceProgress}
@@ -91,7 +89,7 @@ export default function PreferencesScreen() {
           <PreferencePanel
             label="Budget"
             value={BUDGET_OPTIONS.options[budgetLevel - 1]}
-            detail={`level ${budgetLevel}`}>
+           >
             <RangeSlider
               value={budgetProgress}
               onChange={updateBudget}

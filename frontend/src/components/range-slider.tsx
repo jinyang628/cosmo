@@ -115,9 +115,9 @@ export default function RangeSlider({
         <View
           style={{
             bottom: 0,
-            left: 0,
+            left: 5,
             position: 'absolute',
-            right: 0,
+            right: 5,
             top: 0,
           }}>
           {Array.from({ length: stepCount }).map((_, index) => (
