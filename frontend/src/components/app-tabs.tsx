@@ -20,7 +20,7 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="explore">
+      <NativeTabs.Trigger name="preferences">
         <NativeTabs.Trigger.Label>Preferences</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf="slider.horizontal.3"

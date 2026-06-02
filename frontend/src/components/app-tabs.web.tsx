@@ -8,12 +8,12 @@ import {
 } from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, useColorScheme, View } from 'react-native';
+import { Pressable, useColorScheme, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
   return (
@@ -50,12 +50,12 @@ export function TabButton({ children, icon, isFocused, ...props }: TabButtonProp
     <Pressable
       {...props}
       style={({ pressed }) => [
-        styles.tabPressable,
-        pressed && styles.pressed,
+        { flex: 1 },
+        pressed && { opacity: 0.7 },
       ]}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
-        style={styles.tabButtonView}>
+        className="min-h-14 items-center justify-center gap-1 rounded-2xl px-2 py-2">
         <SymbolView tintColor={tintColor} name={icon} size={20} />
         <ThemedText type="smallBold" themeColor={isFocused ? 'text' : 'textSecondary'}>
           {children}
@@ -70,62 +70,22 @@ export function CustomTabList(props: TabListProps) {
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
 
   return (
-    <View {...props} style={styles.tabListContainer}>
+    <View
+      {...props}
+      className="absolute bottom-0 w-full flex-row items-center justify-center px-4 pb-4 pt-2">
       <ThemedView
         type="backgroundElement"
-        style={[
-          styles.innerContainer,
-          {
-            borderColor: colors.backgroundSelected,
-            shadowColor: colors.text,
-          },
-        ]}>
+        className="max-w-[420px] flex-grow flex-row items-center justify-between gap-2 rounded-2xl border p-2"
+        style={{
+          borderColor: colors.backgroundSelected,
+          elevation: 8,
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.16,
+          shadowRadius: 24,
+        }}>
         {props.children}
       </ThemedView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  tabListContainer: {
-    bottom: 0,
-    position: 'absolute',
-    width: '100%',
-    paddingBottom: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  innerContainer: {
-    borderRadius: Spacing.three,
-    borderWidth: 1,
-    elevation: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexGrow: 1,
-    gap: Spacing.two,
-    justifyContent: 'space-between',
-    maxWidth: 420,
-    padding: Spacing.two,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  tabPressable: {
-    flex: 1,
-  },
-  tabButtonView: {
-    alignItems: 'center',
-    borderRadius: Spacing.three,
-    gap: Spacing.one,
-    minHeight: 56,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.two,
-  },
-});
