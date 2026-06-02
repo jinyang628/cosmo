@@ -1,98 +1,377 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SymbolView } from 'expo-symbols';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
+import {
+  foodMoods,
+  recommendations,
+  type FoodMood,
+  type Recommendation,
+} from '@/constants/recommendations';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { useTheme } from '@/hooks/use-theme';
 
 export default function HomeScreen() {
+  const theme = useTheme();
+  const safeAreaInsets = useSafeAreaInsets();
+  const [selectedMood, setSelectedMood] = useState<FoodMood>('fast');
+
+  const visibleRecommendations = useMemo(() => {
+    const selected = recommendations.filter((item) => item.mood === selectedMood);
+    return selected.length > 0 ? selected : recommendations;
+  }, [selectedMood]);
+
+  const featuredRecommendation = visibleRecommendations[0] ?? recommendations[0];
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <ThemedView style={styles.screen}>
+      <ScrollView
+        style={styles.scrollView}
+        contentInset={{ bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.four }}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: safeAreaInsets.bottom + BottomTabInset + Spacing.four },
+        ]}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <View>
+              <View style={styles.locationRow}>
+                <SymbolView
+                  tintColor={theme.textSecondary}
+                  name={{ ios: 'location.fill', android: 'map', web: 'map' }}
+                  size={14}
+                />
+                <ThemedText type="small" themeColor="textSecondary">
+                  Nearby
+                </ThemedText>
+              </View>
+              <ThemedText type="subtitle" style={styles.title}>
+                What sounds good?
+              </ThemedText>
+            </View>
+            <Pressable
+              accessibilityLabel="Refresh recommendations"
+              style={({ pressed }) => [
+                styles.iconButton,
+                { backgroundColor: theme.backgroundElement },
+                pressed && styles.pressed,
+              ]}>
+              <SymbolView
+                tintColor={theme.text}
+                name={{ ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' }}
+                size={18}
+              />
+            </Pressable>
+          </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.moodScroller}>
+            {foodMoods.map((mood) => {
+              const selected = selectedMood === mood.id;
+              return (
+                <Pressable
+                  key={mood.id}
+                  onPress={() => setSelectedMood(mood.id)}
+                  style={({ pressed }) => [
+                    styles.moodChip,
+                    {
+                      backgroundColor: selected ? theme.text : theme.backgroundElement,
+                      borderColor: selected ? theme.text : theme.backgroundSelected,
+                    },
+                    pressed && styles.pressed,
+                  ]}>
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: selected ? theme.background : theme.text }}>
+                    {mood.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <FeaturedCard recommendation={featuredRecommendation} />
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
+          <View style={styles.sectionHeading}>
+            <ThemedText type="smallBold" style={styles.eyebrow} themeColor="textSecondary">
+              SHORTLIST
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {visibleRecommendations.length} pick
+              {visibleRecommendations.length === 1 ? '' : 's'}
+            </ThemedText>
+          </View>
+
+          <View style={styles.list}>
+            {recommendations.map((recommendation) => (
+              <RecommendationRow key={recommendation.id} recommendation={recommendation} />
+            ))}
+          </View>
+        </SafeAreaView>
+      </ScrollView>
     </ThemedView>
   );
 }
 
+function FeaturedCard({ recommendation }: { recommendation: Recommendation }) {
+  const theme = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.featuredCard,
+        {
+          backgroundColor: recommendation.accentColor,
+          shadowColor: theme.text,
+        },
+      ]}>
+      <View style={styles.featuredTopRow}>
+        <ThemedText type="smallBold" style={styles.featuredMeta}>
+          Top match
+        </ThemedText>
+        <ThemedText type="smallBold" style={styles.featuredMeta}>
+          {recommendation.etaMinutes} min
+        </ThemedText>
+      </View>
+
+      <View style={styles.featuredBody}>
+        <ThemedText type="title" style={styles.featuredDish}>
+          {recommendation.dish}
+        </ThemedText>
+        <ThemedText type="default" style={styles.featuredReason}>
+          {recommendation.reason}
+        </ThemedText>
+      </View>
+
+      <View style={styles.featuredFooter}>
+        <View>
+          <ThemedText type="smallBold" style={styles.featuredName}>
+            {recommendation.name}
+          </ThemedText>
+          <ThemedText type="small" style={styles.featuredDetails}>
+            {recommendation.cuisine} - {recommendation.distance} - {recommendation.price}
+          </ThemedText>
+        </View>
+        <View style={styles.ratingPill}>
+          <SymbolView
+            tintColor="#24140F"
+            name={{ ios: 'star.fill', android: 'star', web: 'star' }}
+            size={12}
+          />
+          <ThemedText type="smallBold" style={styles.ratingText}>
+            {recommendation.rating}
+          </ThemedText>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function RecommendationRow({ recommendation }: { recommendation: Recommendation }) {
+  const theme = useTheme();
+
+  return (
+    <Pressable style={({ pressed }) => pressed && styles.pressed}>
+      <ThemedView
+        type="backgroundElement"
+        style={[
+          styles.recommendationRow,
+          { borderColor: theme.backgroundSelected },
+        ]}>
+        <View style={[styles.restaurantMark, { backgroundColor: recommendation.accentColor }]}>
+          <ThemedText type="smallBold" style={styles.restaurantInitial}>
+            {recommendation.name.slice(0, 1)}
+          </ThemedText>
+        </View>
+        <View style={styles.rowContent}>
+          <ThemedText type="smallBold">{recommendation.name}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+            {recommendation.dish}
+          </ThemedText>
+          <View style={styles.tagRow}>
+            {recommendation.tags.slice(0, 2).map((tag) => (
+              <ThemedView key={tag} type="backgroundSelected" style={styles.tag}>
+                <ThemedText type="code" themeColor="textSecondary">
+                  {tag}
+                </ThemedText>
+              </ThemedView>
+            ))}
+          </View>
+        </View>
+        <View style={styles.rowMeta}>
+          <ThemedText type="smallBold">{recommendation.etaMinutes}m</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {recommendation.distance}
+          </ThemedText>
+        </View>
+      </ThemedView>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    alignItems: 'center',
   },
   safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    width: '100%',
     maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    gap: Spacing.three,
   },
-  heroSection: {
+  header: {
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  locationRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: Spacing.one,
+    marginBottom: Spacing.one,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 34,
+    lineHeight: 40,
   },
-  code: {
+  iconButton: {
+    alignItems: 'center',
+    borderRadius: 22,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  pressed: {
+    opacity: 0.72,
+  },
+  moodScroller: {
+    gap: Spacing.two,
+    paddingRight: Spacing.three,
+  },
+  moodChip: {
+    borderRadius: 18,
+    borderWidth: 1,
+    minHeight: 36,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  featuredCard: {
+    borderRadius: Spacing.three,
+    elevation: 4,
+    gap: Spacing.five,
+    minHeight: 280,
+    padding: Spacing.three,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    width: '100%',
+  },
+  featuredTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  featuredMeta: {
+    color: '#24140F',
     textTransform: 'uppercase',
   },
-  stepContainer: {
+  featuredBody: {
+    gap: Spacing.two,
+  },
+  featuredDish: {
+    color: '#24140F',
+    fontSize: 42,
+    lineHeight: 46,
+  },
+  featuredReason: {
+    color: '#3E2A1E',
+    maxWidth: 340,
+  },
+  featuredFooter: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  },
+  featuredName: {
+    color: '#24140F',
+  },
+  featuredDetails: {
+    color: '#3E2A1E',
+  },
+  ratingPill: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.42)',
+    borderRadius: 18,
+    flexDirection: 'row',
+    gap: Spacing.one,
+    minHeight: 34,
+    paddingHorizontal: Spacing.two,
+  },
+  ratingText: {
+    color: '#24140F',
+  },
+  sectionHeading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  eyebrow: {
+    letterSpacing: 0,
+  },
+  list: {
+    gap: Spacing.two,
+    width: '100%',
+  },
+  recommendationRow: {
+    alignItems: 'center',
+    borderRadius: Spacing.three,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: Spacing.three,
+    minHeight: 104,
+    padding: Spacing.three,
+  },
+  restaurantMark: {
+    alignItems: 'center',
+    borderRadius: 22,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  restaurantInitial: {
+    color: '#24140F',
+  },
+  rowContent: {
+    flex: 1,
+    gap: Spacing.one,
+    minWidth: 0,
+  },
+  rowMeta: {
+    alignItems: 'flex-end',
+    gap: Spacing.one,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one,
+  },
+  tag: {
+    borderRadius: 10,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
   },
 });

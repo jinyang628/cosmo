@@ -11,4 +11,4 @@ start-backend:
 	cd backend && poetry run uvicorn app.api.main:app --reload --host 0.0.0.0 --port 8080 --env-file .env
 
 start-frontend:
-	cd frontend && npm run dev
+	cd frontend && npx expo start

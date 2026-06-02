@@ -1,6 +1,6 @@
-# Welcome to your Expo app 👋
+# Nibble
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Nibble is an Expo phone app scaffold for nearby food recommendations. The current build uses local mock recommendation data so the API source, ranking rules, and user-preference model can be swapped in later.
 
 ## Get started
 
