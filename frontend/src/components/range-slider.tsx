@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
 import { View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 
+import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { clamp } from '@/utils/slider';
 
@@ -10,6 +11,9 @@ export type RangeSliderProps = {
   stepCount?: number;
   value: number;
 };
+
+const ThumbSize = 28;
+const TrackHorizontalInset = ThumbSize / 2;
 
 export default function RangeSlider({
   onChange,
@@ -29,7 +33,9 @@ export default function RangeSlider({
         return;
       }
 
-      const nextValue = (pageX - x) / width;
+      const usableWidth = Math.max(width - TrackHorizontalInset * 2, 1);
+      const nextValue = (pageX - x - TrackHorizontalInset) / usableWidth;
+
       if (stepCount && stepCount > 1) {
         onChange(Math.round(clamp(nextValue) * (stepCount - 1)) / (stepCount - 1));
         return;
@@ -74,17 +80,13 @@ export default function RangeSlider({
   }
 
   const clampedValue = clamp(value);
-  const thumbOffset = trackWidth * clampedValue;
+  const usableTrackWidth = Math.max(trackWidth - TrackHorizontalInset * 2, 0);
+  const thumbOffset = TrackHorizontalInset + usableTrackWidth * clampedValue;
 
   return (
     <View
       ref={trackRef}
-      style={{
-        height: 44,
-        justifyContent: 'center',
-        position: 'relative',
-        width: '100%',
-      }}
+      className="relative h-11 w-full justify-center"
       onLayout={handleTrackLayout}
       onMoveShouldSetResponder={() => true}
       onResponderGrant={handleResponderGrant}
@@ -93,63 +95,44 @@ export default function RangeSlider({
       onResponderTerminate={handleResponderEnd}
       onResponderTerminationRequest={() => false}
       onStartShouldSetResponder={() => true}>
-      <View
-        style={{
-          backgroundColor: theme.backgroundSelected,
-          borderRadius: 5,
-          height: 10,
-          overflow: 'hidden',
-          width: '100%',
-        }}>
-        <View
-          style={{
-            backgroundColor: theme.text,
-            borderRadius: 5,
-            height: '100%',
-            width: `${clampedValue * 100}%`,
-          }}
+      <ThemedView
+        type="backgroundSelected"
+        className="relative h-2.5 overflow-hidden rounded-[5px]"
+        style={{ marginHorizontal: TrackHorizontalInset }}>
+        <ThemedView
+          type="text"
+          className="h-full rounded-[5px]"
+          style={{ width: `${clampedValue * 100}%` }}
         />
-      </View>
+      </ThemedView>
 
-      {stepCount ? (
+      {stepCount && stepCount > 1 ? (
         <View
-          style={{
-            bottom: 0,
-            left: 5,
-            position: 'absolute',
-            right: 5,
-            top: 0,
-          }}>
+          pointerEvents="none"
+          className="absolute inset-y-0"
+          style={{ left: TrackHorizontalInset, right: TrackHorizontalInset }}>
           {Array.from({ length: stepCount }).map((_, index) => (
-            <View
+            <ThemedView
               key={index}
+              type="background"
+              className="absolute top-1/2 h-1.5 w-1.5 rounded-[3px]"
               style={{
-                backgroundColor: theme.background,
-                borderRadius: 3,
-                height: 6,
                 left: `${(index / (stepCount - 1)) * 100}%`,
                 marginLeft: -3,
-                position: 'absolute',
-                top: 19,
-                width: 6,
+                transform: [{ translateY: -3 }],
               }}
             />
           ))}
         </View>
       ) : null}
 
-      <View
+      <ThemedView
+        type="background"
+        className="absolute top-2 h-7 w-7 rounded-[14px] border-[3px]"
         style={{
-          backgroundColor: theme.background,
           borderColor: theme.text,
-          borderRadius: 14,
-          borderWidth: 3,
-          height: 28,
           left: thumbOffset,
-          marginLeft: -14,
-          position: 'absolute',
-          top: 8,
-          width: 28,
+          marginLeft: -TrackHorizontalInset,
         }}
       />
     </View>

@@ -118,20 +118,21 @@ export default function PreferencesScreen() {
                 return (
                   <Pressable
                     key={option}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    className="min-h-9 items-center justify-center rounded-[18px] border px-4 py-2"
                     onPress={() => toggleDiet(option)}
                     style={({ pressed }) => [
                       {
-                        borderRadius: 18,
+                        borderColor: selected ? theme.text : theme.backgroundSelected,
                         backgroundColor: selected ? theme.text : theme.backgroundSelected,
-                        minHeight: 36,
-                        paddingHorizontal: Spacing.three,
-                        paddingVertical: Spacing.two,
                       },
                       pressed && { opacity: 0.72 },
                     ]}>
                     <ThemedText
                       type="smallBold"
-                      style={{ color: selected ? theme.background : theme.text }}>
+                      themeColor={selected ? 'background' : 'textSecondary'}
+                    >
                       {option}
                     </ThemedText>
                   </Pressable>
