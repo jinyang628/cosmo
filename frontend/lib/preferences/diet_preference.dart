@@ -1,12 +1,13 @@
 enum DietPreference {
-  spicyOk('Spicy Ok'),
-  vegetarian('Vegetarian'),
-  vegan('Vegan'),
-  pescatarian('Pescatarian');
+  spicyOk('Spicy Ok', 'spicyOk'),
+  vegetarian('Vegetarian', 'vegetarian'),
+  vegan('Vegan', 'vegan'),
+  pescatarian('Pescatarian', 'pescatarian');
 
-  const DietPreference(this.label);
+  const DietPreference(this.label, this.apiValue);
 
   final String label;
+  final String apiValue;
 }
 
 const dietPreferences = [

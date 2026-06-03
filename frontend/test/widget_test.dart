@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/app.dart';
+import 'package:frontend/config/api_config.dart';
 import 'package:frontend/pages/landing_page.dart';
 import 'package:frontend/preferences/diet_preference.dart';
+import 'package:frontend/preferences/preferences_api.dart';
+import 'package:frontend/preferences/user_preferences.dart';
 
 void main() {
   testWidgets('Preferences page shows food recommendation controls', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const CosmoApp());
+    final preferencesApi = RecordingPreferencesApi();
+    await tester.pumpWidget(CosmoApp(preferencesApi: preferencesApi));
 
     expect(find.byType(LandingPage), findsOneWidget);
 
@@ -36,10 +41,17 @@ void main() {
 
     final veganChip = tester.widget<FilterChip>(veganChipFinder);
     expect(veganChip.selected, isTrue);
+    expect(preferencesApi.savedPreferences, hasLength(1));
+    expect(
+      preferencesApi.savedPreferences.single.dietPreferences,
+      contains(DietPreference.vegan),
+    );
   });
 
   testWidgets('Settings drawer toggles dark mode', (WidgetTester tester) async {
-    await tester.pumpWidget(const CosmoApp());
+    await tester.pumpWidget(
+      CosmoApp(preferencesApi: RecordingPreferencesApi()),
+    );
 
     expect(
       Theme.of(tester.element(find.byType(LandingPage))).brightness,
@@ -62,4 +74,21 @@ void main() {
       Brightness.dark,
     );
   });
+
+  test('API config throws when base URL is not configured', () {
+    dotenv.clean();
+
+    expect(() => ApiConfig.apiBaseUrl, throwsA(isA<ApiConfigException>()));
+  });
+}
+
+class RecordingPreferencesApi extends PreferencesApi {
+  RecordingPreferencesApi() : super(baseUrl: '');
+
+  final List<UserPreferences> savedPreferences = [];
+
+  @override
+  Future<void> savePreferences(UserPreferences preferences) async {
+    savedPreferences.add(preferences);
+  }
 }

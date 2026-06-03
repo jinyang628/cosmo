@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../pages/landing_page.dart';
 import '../pages/preferences_page.dart';
 import '../preferences/diet_preference.dart';
+import '../preferences/preferences_api.dart';
+import '../preferences/user_preferences.dart';
 import '../settings/settings_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
+    required this.preferencesApi,
     required this.themeMode,
     required this.onThemeModeChanged,
     super.key,
   });
 
+  final PreferencesApi preferencesApi;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
 
@@ -36,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedDiets: _selectedDiets,
         onBudgetChanged: (value) {
           setState(() => _budgetLevel = value);
+          unawaited(_savePreferences());
         },
         onDietToggled: (diet) {
           setState(() {
@@ -43,9 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
               _selectedDiets.remove(diet);
             }
           });
+          unawaited(_savePreferences());
         },
         onDistanceChanged: (value) {
           setState(() => _distanceMeters = value);
+          unawaited(_savePreferences());
         },
       ),
     ];
@@ -84,5 +93,25 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _savePreferences() async {
+    try {
+      await widget.preferencesApi.savePreferences(
+        UserPreferences(
+          distanceMeters: _distanceMeters,
+          budgetLevel: _budgetLevel,
+          dietPreferences: _selectedDiets,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save preferences')),
+      );
+    }
   }
 }

@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter
 
-from app.controllers.messages import MessagesController
-from app.services.messages import MessagesService
+from app.controllers.preferences import PreferencesController
+from app.services.preferences import PreferencesService
 
 log = logging.getLogger(__name__)
 
@@ -18,16 +18,16 @@ async def status():
     return {"status": "ok"}
 
 
-### Messages
+### Preferences
 
 
-def get_messages_controller_router():
-    service = MessagesService()
-    return MessagesController(service=service).router
+def get_preferences_controller_router():
+    service = PreferencesService()
+    return PreferencesController(service=service).router
 
 
 router.include_router(
-    get_messages_controller_router(),
-    tags=["messages"],
-    prefix="/messages",
+    get_preferences_controller_router(),
+    tags=["preferences"],
+    prefix="/preferences",
 )
