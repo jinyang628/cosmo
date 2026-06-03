@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'preferences/diet_preference.dart';
+
 void main() {
   runApp(const CosmoApp());
 }
@@ -33,17 +35,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const List<String> _dietOptions = [
-    'Spicy Ok',
-    'Vegetarian',
-    'Vegan',
-    'Pescatarian',
-  ];
-
   int _selectedPageIndex = 0;
   double _distanceMeters = 1000;
   int _budgetLevel = 2;
-  final Set<String> _selectedDiets = <String>{};
+  final Set<DietPreference> _selectedDiets = <DietPreference>{};
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const LandingPage(),
       PreferencesPage(
         budgetLevel: _budgetLevel,
-        dietOptions: _dietOptions,
+        dietOptions: dietPreferences,
         distanceMeters: _distanceMeters,
         selectedDiets: _selectedDiets,
         onBudgetChanged: (value) {
@@ -121,11 +116,11 @@ class PreferencesPage extends StatelessWidget {
   });
 
   final int budgetLevel;
-  final List<String> dietOptions;
+  final List<DietPreference> dietOptions;
   final double distanceMeters;
-  final Set<String> selectedDiets;
+  final Set<DietPreference> selectedDiets;
   final ValueChanged<int> onBudgetChanged;
-  final ValueChanged<String> onDietToggled;
+  final ValueChanged<DietPreference> onDietToggled;
   final ValueChanged<double> onDistanceChanged;
 
   @override
@@ -183,7 +178,7 @@ class PreferencesPage extends StatelessWidget {
               children: [
                 for (final option in dietOptions)
                   FilterChip(
-                    label: Text(option),
+                    label: Text(option.label),
                     selected: selectedDiets.contains(option),
                     onSelected: (_) => onDietToggled(option),
                   ),
@@ -267,11 +262,11 @@ String formatDistance(double meters) {
   return '${kilometers.toStringAsFixed(1)}km';
 }
 
-String formatDietSelection(Set<String> selectedDiets) {
+String formatDietSelection(Set<DietPreference> selectedDiets) {
   if (selectedDiets.isEmpty) {
     return 'Any';
   }
 
-  final diets = selectedDiets.toList()..sort();
+  final diets = selectedDiets.map((diet) => diet.label).toList()..sort();
   return diets.join(', ');
 }
