@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/main.dart';
+import 'package:frontend/pages/landing_page.dart';
 import 'package:frontend/preferences/diet_preference.dart';
 
 void main() {
