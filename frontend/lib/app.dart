@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
-class CosmoApp extends StatelessWidget {
+class CosmoApp extends StatefulWidget {
   const CosmoApp({super.key});
+
+  @override
+  State<CosmoApp> createState() => _CosmoAppState();
+}
+
+class _CosmoAppState extends State<CosmoApp> {
+  ThemeMode _themeMode = ThemeMode.light;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Cosmo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xff2f7d4f),
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xfff8faf7),
-        useMaterial3: true,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: _themeMode,
+      home: HomeScreen(
+        themeMode: _themeMode,
+        onThemeModeChanged: (themeMode) {
+          setState(() => _themeMode = themeMode);
+        },
       ),
-      home: const HomeScreen(),
     );
   }
 }

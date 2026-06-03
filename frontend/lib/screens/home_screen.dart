@@ -3,9 +3,17 @@ import 'package:flutter/material.dart';
 import '../pages/landing_page.dart';
 import '../pages/preferences_page.dart';
 import '../preferences/diet_preference.dart';
+import '../settings/settings_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    required this.themeMode,
+    required this.onThemeModeChanged,
+    super.key,
+  });
+
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -43,6 +51,14 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
+      drawer: SettingsDrawer(
+        isDarkMode: widget.themeMode == ThemeMode.dark,
+        onDarkModeChanged: (isDarkMode) {
+          widget.onThemeModeChanged(
+            isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          );
+        },
+      ),
       appBar: AppBar(
         title: const Text('Cosmo'),
         backgroundColor: Colors.transparent,

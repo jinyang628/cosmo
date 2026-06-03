@@ -37,4 +37,29 @@ void main() {
     final veganChip = tester.widget<FilterChip>(veganChipFinder);
     expect(veganChip.selected, isTrue);
   });
+
+  testWidgets('Settings drawer toggles dark mode', (WidgetTester tester) async {
+    await tester.pumpWidget(const CosmoApp());
+
+    expect(
+      Theme.of(tester.element(find.byType(LandingPage))).brightness,
+      Brightness.light,
+    );
+
+    await tester.tap(find.byTooltip('Open navigation menu'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Dark mode'), findsOneWidget);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    expect(
+      Theme.of(tester.element(find.byType(LandingPage))).brightness,
+      Brightness.dark,
+    );
+  });
 }
