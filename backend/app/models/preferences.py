@@ -11,7 +11,7 @@ class DietPreference(StrEnum):
 
 
 class PreferencesRequest(BaseModel):
-    distance_meters: float = Field(
+    distance_meters: int = Field(
         ge=100,
         le=10000,
         description="The maximum distance in meters for recommendations.",

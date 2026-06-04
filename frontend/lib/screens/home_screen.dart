@@ -104,7 +104,10 @@ class _HomeScreenState extends State<HomeScreen> {
           dietPreferences: _selectedDiets,
         ),
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('HomeScreen: could not save preferences: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (!mounted) {
         return;
       }
