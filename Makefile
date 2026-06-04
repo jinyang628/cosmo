@@ -1,8 +1,8 @@
 .PHONY: lint
 
 lint:
-	cd frontend && npx prettier --write .
-	cd frontend && npm run lint --fix .
+	cd frontend && dart format .
+	cd frontend && flutter analyze
 	cd backend && poetry run black .
 	cd backend && poetry run isort .
 	cd backend && poetry run autoflake --in-place --remove-all-unused-imports --recursive .

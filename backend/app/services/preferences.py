@@ -1,11 +1,11 @@
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
+
 from postgrest.exceptions import APIError
 from starlette.concurrency import run_in_threadpool
 
 from app.clients.supabase import get_supabase_service_client
 from app.models.preferences import PreferencesRequest
-
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,9 @@ class PreferencesService:
             "user_id": user_id,
             "distance_meters": input.distance_meters,
             "budget_level": input.budget_level,
-            "diet_preferences": [preference.value for preference in input.diet_preferences],
+            "diet_preferences": [
+                preference.value for preference in input.diet_preferences
+            ],
             "updated_at": datetime.now(UTC).isoformat(),
         }
 

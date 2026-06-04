@@ -22,6 +22,10 @@
       "source.organizeImports": "always"
     }
   },
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.formatOnSave": true
+  },
   "prettier.requireConfig": true,
   "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit"
