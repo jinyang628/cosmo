@@ -47,14 +47,7 @@ class PreferencesApi {
     final auth = Supabase.instance.client.auth;
     final session = auth.currentSession;
     if (session == null) {
-      debugPrint('PreferencesApi: no session, signing in anonymously');
-      final response = await auth.signInAnonymously();
-      final accessToken = response.session?.accessToken;
-      if (accessToken == null) {
-        throw const PreferencesApiException('User is not signed in');
-      }
-
-      return accessToken;
+      throw const PreferencesApiException('User is not signed in');
     }
 
     return session.accessToken;

@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/app.dart';
+import 'package:frontend/auth/auth_service.dart';
 import 'package:frontend/config/api_config.dart';
 import 'package:frontend/pages/landing_page.dart';
+import 'package:frontend/pages/sign_in_page.dart';
 import 'package:frontend/preferences/diet_preference.dart';
 import 'package:frontend/preferences/preferences_api.dart';
 import 'package:frontend/preferences/user_preferences.dart';
@@ -14,7 +19,12 @@ void main() {
     WidgetTester tester,
   ) async {
     final preferencesApi = RecordingPreferencesApi();
-    await tester.pumpWidget(CosmoApp(preferencesApi: preferencesApi));
+    await tester.pumpWidget(
+      CosmoApp(
+        preferencesApi: preferencesApi,
+        authService: RecordingAuthService(initiallySignedIn: true),
+      ),
+    );
 
     expect(find.byType(LandingPage), findsOneWidget);
 
@@ -50,7 +60,10 @@ void main() {
 
   testWidgets('Settings drawer toggles dark mode', (WidgetTester tester) async {
     await tester.pumpWidget(
-      CosmoApp(preferencesApi: RecordingPreferencesApi()),
+      CosmoApp(
+        preferencesApi: RecordingPreferencesApi(),
+        authService: RecordingAuthService(initiallySignedIn: true),
+      ),
     );
 
     expect(
@@ -80,6 +93,20 @@ void main() {
 
     expect(() => ApiConfig.apiBaseUrl, throwsA(isA<ApiConfigException>()));
   });
+
+  testWidgets('Signed-out users see the Google sign-in page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      CosmoApp(
+        preferencesApi: RecordingPreferencesApi(),
+        authService: RecordingAuthService(initiallySignedIn: false),
+      ),
+    );
+
+    expect(find.byType(SignInPage), findsOneWidget);
+    expect(find.text('Sign in with Google'), findsOneWidget);
+  });
 }
 
 class RecordingPreferencesApi extends PreferencesApi {
@@ -90,5 +117,36 @@ class RecordingPreferencesApi extends PreferencesApi {
   @override
   Future<void> savePreferences(UserPreferences preferences) async {
     savedPreferences.add(preferences);
+  }
+}
+
+class RecordingAuthService implements AuthService {
+  RecordingAuthService({required bool initiallySignedIn})
+    : _isSignedIn = initiallySignedIn;
+
+  final StreamController<bool> _signedInChangesController =
+      StreamController<bool>.broadcast();
+  bool _isSignedIn;
+
+  @override
+  Stream<bool> get signedInChanges => _signedInChangesController.stream;
+
+  @override
+  bool get isSignedIn => _isSignedIn;
+
+  @override
+  User? get currentUser => null;
+
+  @override
+  Future<AuthResponse> signInWithGoogle() {
+    _isSignedIn = true;
+    _signedInChangesController.add(true);
+    return Future.value(AuthResponse());
+  }
+
+  @override
+  Future<void> signOut() async {
+    _isSignedIn = false;
+    _signedInChangesController.add(false);
   }
 }

@@ -13,6 +13,14 @@ abstract final class ApiConfig {
     return _requiredEnv('SUPABASE_ANON_KEY');
   }
 
+  static String get googleWebClientId {
+    return _requiredEnv('GOOGLE_WEB_CLIENT_ID');
+  }
+
+  static String? get googleIosClientId {
+    return _requiredEnv('GOOGLE_IOS_CLIENT_ID');
+  }
+
   static String _requiredEnv(String name) {
     if (!dotenv.isInitialized) {
       throw ApiConfigException('$name is not configured');

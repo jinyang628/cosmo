@@ -13,12 +13,16 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     required this.preferencesApi,
     required this.themeMode,
+    required this.onSignOut,
     required this.onThemeModeChanged,
+    this.userEmail,
     super.key,
   });
 
   final PreferencesApi preferencesApi;
   final ThemeMode themeMode;
+  final String? userEmail;
+  final Future<void> Function() onSignOut;
   final ValueChanged<ThemeMode> onThemeModeChanged;
 
   @override
@@ -62,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       drawer: SettingsDrawer(
         isDarkMode: widget.themeMode == ThemeMode.dark,
+        userEmail: widget.userEmail,
+        onSignOut: widget.onSignOut,
         onDarkModeChanged: (isDarkMode) {
           widget.onThemeModeChanged(
             isDarkMode ? ThemeMode.dark : ThemeMode.light,

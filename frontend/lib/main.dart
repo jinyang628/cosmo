@@ -12,5 +12,5 @@ Future<void> main() async {
     url: ApiConfig.supabaseUrl,
     anonKey: ApiConfig.supabaseAnonKey,
   );
-  runApp(const CosmoApp());
+  runApp(CosmoApp());
 }
