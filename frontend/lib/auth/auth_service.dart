@@ -101,11 +101,6 @@ class SupabaseAuthService implements AuthService {
     } else if (defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
       final googleIosClientId = ApiConfig.googleIosClientId;
-      if (googleIosClientId == null) {
-        throw const AuthServiceException(
-          'GOOGLE_IOS_CLIENT_ID is not configured',
-        );
-      }
       await GoogleSignIn.instance.initialize(
         clientId: googleIosClientId,
         serverClientId: ApiConfig.googleWebClientId,
