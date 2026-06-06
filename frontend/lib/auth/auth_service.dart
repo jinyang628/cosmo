@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -82,11 +83,16 @@ class SupabaseAuthService implements AuthService {
       return;
     }
 
-    final iosClientId = ApiConfig.googleIosClientId;
-    await GoogleSignIn.instance.initialize(
-      clientId: iosClientId,
-      serverClientId: ApiConfig.googleWebClientId,
-    );
+    if (kIsWeb) {
+      await GoogleSignIn.instance.initialize(
+        clientId: ApiConfig.googleWebClientId,
+      );
+    } else {
+      await GoogleSignIn.instance.initialize(
+        clientId: ApiConfig.googleIosClientId,
+        serverClientId: ApiConfig.googleWebClientId,
+      );
+    }
     _googleSignInInitialized = true;
   }
 }
