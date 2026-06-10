@@ -1,5 +1,5 @@
 enum DietPreference {
-  spicyOk('Spicy Ok', 'spicyOk'),
+  spicy('Spicy', 'spicy'),
   vegetarian('Vegetarian', 'vegetarian'),
   vegan('Vegan', 'vegan'),
   pescatarian('Pescatarian', 'pescatarian');
@@ -11,7 +11,7 @@ enum DietPreference {
 }
 
 const dietPreferences = [
-  DietPreference.spicyOk,
+  DietPreference.spicy,
   DietPreference.vegetarian,
   DietPreference.vegan,
   DietPreference.pescatarian,

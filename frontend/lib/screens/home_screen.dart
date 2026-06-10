@@ -7,11 +7,13 @@ import '../pages/preferences_page.dart';
 import '../preferences/diet_preference.dart';
 import '../preferences/preferences_api.dart';
 import '../preferences/user_preferences.dart';
+import '../restaurants/restaurants_api.dart';
 import '../settings/settings_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     required this.preferencesApi,
+    required this.restaurantsApi,
     required this.themeMode,
     required this.onSignOut,
     required this.onThemeModeChanged,
@@ -20,6 +22,7 @@ class HomeScreen extends StatefulWidget {
   });
 
   final PreferencesApi preferencesApi;
+  final RestaurantsApi restaurantsApi;
   final ThemeMode themeMode;
   final String? userEmail;
   final Future<void> Function() onSignOut;
@@ -38,7 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const LandingPage(),
+      LandingPage(
+        distanceMeters: _distanceMeters,
+        selectedDiets: _selectedDiets,
+        restaurantsApi: widget.restaurantsApi,
+      ),
       PreferencesPage(
         budgetLevel: _budgetLevel,
         dietOptions: dietPreferences,

@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class DietPreference(StrEnum):
-    spicyOk = "spicyOk"
+    spicy = "spicy"
     vegetarian = "vegetarian"
     vegan = "vegan"
     pescatarian = "pescatarian"

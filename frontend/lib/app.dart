@@ -5,17 +5,20 @@ import 'package:flutter/material.dart';
 import 'auth/auth_service.dart';
 import 'pages/sign_in_page.dart';
 import 'preferences/preferences_api.dart';
+import 'restaurants/restaurants_api.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 
 class CosmoApp extends StatefulWidget {
   CosmoApp({
     this.preferencesApi = const PreferencesApi(),
+    this.restaurantsApi = const RestaurantsApi(),
     AuthService? authService,
     super.key,
   }) : authService = authService ?? SupabaseAuthService();
 
   final PreferencesApi preferencesApi;
+  final RestaurantsApi restaurantsApi;
   final AuthService authService;
 
   @override
@@ -53,6 +56,7 @@ class _CosmoAppState extends State<CosmoApp> {
       home: _isSignedIn
           ? HomeScreen(
               preferencesApi: widget.preferencesApi,
+              restaurantsApi: widget.restaurantsApi,
               themeMode: _themeMode,
               userEmail: widget.authService.currentUser?.email,
               onSignOut: widget.authService.signOut,

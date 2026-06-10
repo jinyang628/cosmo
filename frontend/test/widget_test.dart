@@ -14,6 +14,8 @@ import 'package:frontend/pages/sign_in_page.dart';
 import 'package:frontend/preferences/diet_preference.dart';
 import 'package:frontend/preferences/preferences_api.dart';
 import 'package:frontend/preferences/user_preferences.dart';
+import 'package:frontend/restaurants/restaurant.dart';
+import 'package:frontend/restaurants/restaurants_api.dart';
 
 void main() {
   testWidgets('Preferences page shows food recommendation controls', (
@@ -89,12 +91,14 @@ void main() {
     );
   });
 
-  testWidgets('Landing page requests and displays the current location', (
+  testWidgets('Landing page searches and displays nearby restaurants', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: LandingPage(
+          distanceMeters: 1000,
+          selectedDiets: const {DietPreference.vegan},
           locationService: FakeLocationService(
             location: const UserLocation(
               latitude: 1.352083,
@@ -102,11 +106,23 @@ void main() {
               accuracyMeters: 24,
             ),
           ),
+          restaurantsApi: const FakeRestaurantsApi(
+            restaurants: [
+              Restaurant(
+                id: 'restaurant-1',
+                name: 'Nourish Kitchen',
+                formattedAddress: '12 Orchard Road',
+                rating: 4.6,
+                userRatingCount: 120,
+                priceLevel: 'PRICE_LEVEL_MODERATE',
+              ),
+            ],
+          ),
         ),
       ),
     );
 
-    await tester.tap(find.text('Use current location'));
+    await tester.tap(find.text('Find restaurants nearby'));
     await tester.pumpAndSettle();
 
     expect(find.text('Latitude'), findsOneWidget);
@@ -115,6 +131,12 @@ void main() {
     expect(find.text('103.819839'), findsOneWidget);
     expect(find.text('Accuracy'), findsOneWidget);
     expect(find.text('24m'), findsOneWidget);
+    expect(find.text('Restaurants'), findsOneWidget);
+    expect(find.text('Nourish Kitchen'), findsOneWidget);
+    expect(find.text('12 Orchard Road'), findsOneWidget);
+    expect(find.text('4.6 star'), findsOneWidget);
+    expect(find.text('120 ratings'), findsOneWidget);
+    expect(find.text(r'$$'), findsOneWidget);
     expect(find.text('Refresh'), findsOneWidget);
   });
 
@@ -146,6 +168,22 @@ class FakeLocationService implements LocationService {
 
   @override
   Future<UserLocation> getCurrentLocation() async => location;
+}
+
+class FakeRestaurantsApi extends RestaurantsApi {
+  const FakeRestaurantsApi({required this.restaurants});
+
+  final List<Restaurant> restaurants;
+
+  @override
+  Future<List<Restaurant>> searchNearby({
+    required UserLocation location,
+    required double radiusMeters,
+    required Set<DietPreference> dietPreferences,
+    int maxResultCount = 10,
+  }) async {
+    return restaurants;
+  }
 }
 
 class RecordingPreferencesApi extends PreferencesApi {
