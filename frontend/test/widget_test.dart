@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:frontend/app.dart';
 import 'package:frontend/auth/auth_service.dart';
 import 'package:frontend/config/api_config.dart';
+import 'package:frontend/location/location_service.dart';
 import 'package:frontend/pages/landing_page.dart';
 import 'package:frontend/pages/sign_in_page.dart';
 import 'package:frontend/preferences/diet_preference.dart';
@@ -88,6 +89,35 @@ void main() {
     );
   });
 
+  testWidgets('Landing page requests and displays the current location', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LandingPage(
+          locationService: FakeLocationService(
+            location: const UserLocation(
+              latitude: 1.352083,
+              longitude: 103.819839,
+              accuracyMeters: 24,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Use current location'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Latitude'), findsOneWidget);
+    expect(find.text('1.352083'), findsOneWidget);
+    expect(find.text('Longitude'), findsOneWidget);
+    expect(find.text('103.819839'), findsOneWidget);
+    expect(find.text('Accuracy'), findsOneWidget);
+    expect(find.text('24m'), findsOneWidget);
+    expect(find.text('Refresh'), findsOneWidget);
+  });
+
   test('API config throws when base URL is not configured', () {
     dotenv.clean();
 
@@ -107,6 +137,15 @@ void main() {
     expect(find.byType(SignInPage), findsOneWidget);
     expect(find.text('Sign in with Google'), findsOneWidget);
   });
+}
+
+class FakeLocationService implements LocationService {
+  const FakeLocationService({required this.location});
+
+  final UserLocation location;
+
+  @override
+  Future<UserLocation> getCurrentLocation() async => location;
 }
 
 class RecordingPreferencesApi extends PreferencesApi {
