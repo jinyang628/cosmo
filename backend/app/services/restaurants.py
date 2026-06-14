@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from app.config.google_places import GooglePlacesConfig
+from app.config.google_places import GooglePlacesConfig, GooglePlacesConfigError
 from app.models.preferences import DietPreference
 from app.models.restaurants import (
     NearbyRestaurantsRequest,
@@ -35,23 +35,34 @@ class RestaurantsService:
         ]
     )
 
-    async def search_nearby(self, input: NearbyRestaurantsRequest) -> list[Restaurant]:
-        payload = {
-            "textQuery": _build_text_query(input.diet_preferences),
-            "includedType": "restaurant",
-            "strictTypeFiltering": True,
-            "pageSize": input.max_result_count,
-            "locationRestriction": _build_location_restriction(
-                latitude=input.latitude,
-                longitude=input.longitude,
-                radius_meters=input.radius_meters,
-            ),
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": GooglePlacesConfig.api_key(),
-            "X-Goog-FieldMask": self._field_mask,
-        }
+    async def search_nearby_restaurants(self, input: NearbyRestaurantsRequest) -> list[Restaurant]:
+        try:
+            payload = {
+                "textQuery": _build_text_query(input.diet_preferences),
+                "includedType": "restaurant",
+                "strictTypeFiltering": True,
+                "pageSize": input.max_result_count,
+                "locationRestriction": _build_location_restriction(
+                    latitude=input.latitude,
+                    longitude=input.longitude,
+                    radius_meters=input.radius_meters,
+                ),
+            }
+            headers = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": GooglePlacesConfig.api_key(),
+                "X-Goog-FieldMask": self._field_mask,
+            }
+        except GooglePlacesConfigError as exc:
+            log.error("Google Places config error: %s", exc)
+            raise RestaurantsSearchError("Google Places config error") from exc
+        except Exception as exc:
+            log.error(
+                "Unknown error occurred while building Google Places text search payload: %s", exc
+            )
+            raise RestaurantsSearchError(
+                "Unknown error occurred while building Google Places text search payload"
+            ) from exc
 
         try:
             async with httpx.AsyncClient(timeout=10) as client:
@@ -62,14 +73,14 @@ class RestaurantsService:
                 )
                 response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            log.warning(
+            log.error(
                 "Google Places text search failed with status %s: %s",
                 exc.response.status_code,
                 exc.response.text,
             )
             raise RestaurantsSearchError("Google Places text search failed") from exc
         except httpx.HTTPError as exc:
-            log.warning("Google Places text search request failed: %s", exc)
+            log.error("Google Places text search request failed: %s", exc)
             raise RestaurantsSearchError("Google Places text search failed") from exc
 
         try:

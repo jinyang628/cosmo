@@ -18,7 +18,8 @@ class RestaurantsApi {
     required UserLocation location,
     required double radiusMeters,
     required Set<DietPreference> dietPreferences,
-    int maxResultCount = 10,
+    int maxResultCount =
+        10, // TODO: Not customisable in app right now, could add as a customisable feature in future
   }) async {
     debugPrint('RestaurantsApi: searching nearby restaurants');
 
