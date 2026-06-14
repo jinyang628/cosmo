@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/app.dart';
@@ -184,6 +185,65 @@ void main() {
     expect(find.byType(SignInPage), findsOneWidget);
     expect(find.text('Sign in with Google'), findsOneWidget);
   });
+
+  test('Sign-in errors are mapped to concise messages', () {
+    expect(
+      signInErrorMessage(
+        const GoogleSignInException(
+          code: GoogleSignInExceptionCode.clientConfigurationError,
+          description:
+              'OAuth client ID abc123.apps.googleusercontent.com failed',
+          details: {'status': 400},
+        ),
+      ),
+      'Sign-in is not configured correctly.',
+    );
+    expect(
+      signInErrorMessage(
+        const AuthException(
+          'invalid request: leaked API details',
+          statusCode: '401',
+          code: 'bad_jwt',
+        ),
+      ),
+      'Your sign-in session was rejected. Please try again.',
+    );
+    expect(
+      signInErrorMessage(Exception('secret stack details')),
+      'Please try again.',
+    );
+  });
+
+  testWidgets('Sign-in snackbar masks raw error details', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SignInPage(
+          authService: RecordingAuthService(
+            initiallySignedIn: false,
+            signInError: const AuthException(
+              'invalid request: leaked API details',
+              statusCode: '401',
+              code: 'bad_jwt',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'Could not sign in: Your sign-in session was rejected. Please try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('bad_jwt'), findsNothing);
+    expect(find.textContaining('leaked API details'), findsNothing);
+  });
 }
 
 class FakeLocationService implements LocationService {
@@ -223,11 +283,13 @@ class RecordingPreferencesApi extends PreferencesApi {
 }
 
 class RecordingAuthService implements AuthService {
-  RecordingAuthService({required bool initiallySignedIn})
-    : _isSignedIn = initiallySignedIn;
+  RecordingAuthService({required bool initiallySignedIn, Object? signInError})
+    : _isSignedIn = initiallySignedIn,
+      _signInError = signInError;
 
   final StreamController<bool> _signedInChangesController =
       StreamController<bool>.broadcast();
+  final Object? _signInError;
   bool _isSignedIn;
 
   @override
@@ -241,6 +303,11 @@ class RecordingAuthService implements AuthService {
 
   @override
   Future<AuthResponse> signInWithGoogle() {
+    final signInError = _signInError;
+    if (signInError != null) {
+      return Future.error(signInError);
+    }
+
     _isSignedIn = true;
     _signedInChangesController.add(true);
     return Future.value(AuthResponse());
