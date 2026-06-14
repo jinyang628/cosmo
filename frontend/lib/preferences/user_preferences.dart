@@ -7,7 +7,7 @@ class UserPreferences {
     required this.dietPreferences,
   });
 
-  final double distanceMeters;
+  final int distanceMeters;
   final int budgetLevel;
   final Set<DietPreference> dietPreferences;
 

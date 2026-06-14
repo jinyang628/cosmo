@@ -91,6 +91,31 @@ void main() {
     );
   });
 
+  testWidgets('Distance slider saves whole meters', (
+    WidgetTester tester,
+  ) async {
+    final preferencesApi = RecordingPreferencesApi();
+    await tester.pumpWidget(
+      CosmoApp(
+        preferencesApi: preferencesApi,
+        authService: RecordingAuthService(initiallySignedIn: true),
+      ),
+    );
+
+    await tester.tap(find.text('Preferences').last);
+    await tester.pumpAndSettle();
+
+    final distanceSlider = tester.widget<Slider>(find.byType(Slider).first);
+    distanceSlider.onChanged!(2700.0000000000005);
+    await tester.pumpAndSettle();
+
+    expect(preferencesApi.savedPreferences.single.distanceMeters, 2700);
+    expect(
+      preferencesApi.savedPreferences.single.toJson()['distance_meters'],
+      isA<int>(),
+    );
+  });
+
   testWidgets('Landing page searches and displays nearby restaurants', (
     WidgetTester tester,
   ) async {

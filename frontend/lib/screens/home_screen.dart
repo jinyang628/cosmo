@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
           unawaited(_savePreferences());
         },
         onDistanceChanged: (value) {
-          setState(() => _distanceMeters = value);
+          setState(() => _distanceMeters = value.roundToDouble());
           unawaited(_savePreferences());
         },
       ),
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await widget.preferencesApi.savePreferences(
         UserPreferences(
-          distanceMeters: _distanceMeters,
+          distanceMeters: _distanceMeters.round(),
           budgetLevel: _budgetLevel,
           dietPreferences: _selectedDiets,
         ),
