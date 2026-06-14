@@ -151,12 +151,6 @@ void main() {
     await tester.tap(find.text('Find restaurants nearby'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Latitude'), findsOneWidget);
-    expect(find.text('1.352083'), findsOneWidget);
-    expect(find.text('Longitude'), findsOneWidget);
-    expect(find.text('103.819839'), findsOneWidget);
-    expect(find.text('Accuracy'), findsOneWidget);
-    expect(find.text('24m'), findsOneWidget);
     expect(find.text('Restaurants'), findsOneWidget);
     expect(find.text('Nourish Kitchen'), findsOneWidget);
     expect(find.text('12 Orchard Road'), findsOneWidget);

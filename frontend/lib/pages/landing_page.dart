@@ -4,7 +4,6 @@ import '../location/location_service.dart';
 import '../preferences/diet_preference.dart';
 import '../restaurants/restaurant.dart';
 import '../restaurants/restaurants_api.dart';
-import 'location_detail.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -96,25 +95,6 @@ class _LandingPageState extends State<LandingPage> {
                           : 'Refresh',
                     ),
                   ),
-                  if (_location case final location?) ...[
-                    const SizedBox(height: 18),
-                    LocationDetail(
-                      label: 'Latitude',
-                      value: location.latitude.toStringAsFixed(6),
-                    ),
-                    const SizedBox(height: 8),
-                    LocationDetail(
-                      label: 'Longitude',
-                      value: location.longitude.toStringAsFixed(6),
-                    ),
-                    if (location.accuracyMeters case final accuracy?) ...[
-                      const SizedBox(height: 8),
-                      LocationDetail(
-                        label: 'Accuracy',
-                        value: '${accuracy.round()}m',
-                      ),
-                    ],
-                  ],
                   if (_restaurants.isEmpty &&
                       _location != null &&
                       _errorMessage == null &&
