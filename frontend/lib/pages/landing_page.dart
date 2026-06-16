@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../location/location_service.dart';
 import '../preferences/diet_preference.dart';
 import '../restaurants/restaurant.dart';
 import '../restaurants/restaurants_api.dart';
+
+typedef RestaurantUriLauncher = Future<bool> Function(Uri uri);
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -11,6 +14,7 @@ class LandingPage extends StatefulWidget {
     required this.selectedDiets,
     this.locationService = const DeviceLocationService(),
     this.restaurantsApi = const RestaurantsApi(),
+    this.launchRestaurantUri,
     super.key,
   });
 
@@ -18,6 +22,7 @@ class LandingPage extends StatefulWidget {
   final Set<DietPreference> selectedDiets;
   final LocationService locationService;
   final RestaurantsApi restaurantsApi;
+  final RestaurantUriLauncher? launchRestaurantUri;
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -130,7 +135,11 @@ class _LandingPageState extends State<LandingPage> {
             ),
             const SizedBox(height: 12),
             for (final restaurant in _restaurants) ...[
-              _RestaurantTile(restaurant: restaurant),
+              _RestaurantTile(
+                restaurant: restaurant,
+                launchRestaurantUri:
+                    widget.launchRestaurantUri ?? _launchRestaurantUri,
+              ),
               const SizedBox(height: 10),
             ],
           ],
@@ -188,14 +197,19 @@ class _LandingPageState extends State<LandingPage> {
 }
 
 class _RestaurantTile extends StatelessWidget {
-  const _RestaurantTile({required this.restaurant});
+  const _RestaurantTile({
+    required this.restaurant,
+    required this.launchRestaurantUri,
+  });
 
   final Restaurant restaurant;
+  final RestaurantUriLauncher launchRestaurantUri;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final mapsUri = _restaurantMapsUri(restaurant);
     final metadata = [
       if (restaurant.rating case final rating?)
         '${rating.toStringAsFixed(1)} star',
@@ -204,14 +218,26 @@ class _RestaurantTile extends StatelessWidget {
         _formatPriceLevel(priceLevel),
     ];
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border.all(color: colorScheme.outlineVariant),
+    return Material(
+      color: colorScheme.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
-      child: Material(
-        color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: mapsUri == null
+            ? null
+            : () async {
+                final opened = await launchRestaurantUri(mapsUri);
+                if (!opened && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not open Google Maps.'),
+                    ),
+                  );
+                }
+              },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -252,6 +278,24 @@ class _RestaurantTile extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<bool> _launchRestaurantUri(Uri uri) {
+  return launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+Uri? _restaurantMapsUri(Restaurant restaurant) {
+  final googleMapsUri = restaurant.googleMapsUri;
+  if (googleMapsUri == null) {
+    return null;
+  }
+
+  final uri = Uri.tryParse(googleMapsUri);
+  if (uri == null || !uri.hasScheme) {
+    return null;
+  }
+
+  return uri;
 }
 
 String _formatDistance(double meters) {
