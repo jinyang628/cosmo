@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/app.dart';
@@ -17,8 +20,15 @@ import 'package:frontend/preferences/preferences_api.dart';
 import 'package:frontend/preferences/user_preferences.dart';
 import 'package:frontend/restaurants/restaurant.dart';
 import 'package:frontend/restaurants/restaurants_api.dart';
+import 'package:frontend/theme/theme_preferences.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
+
   testWidgets('Preferences page shows food recommendation controls', (
     WidgetTester tester,
   ) async {
@@ -86,6 +96,33 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    expect(
+      Theme.of(tester.element(find.byType(LandingPage))).brightness,
+      Brightness.dark,
+    );
+
+    expect(
+      await SharedPreferencesAsync().getString(ThemePreferences.themeModeKey),
+      'dark',
+    );
+  });
+
+  testWidgets('App starts with persisted dark mode', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.withData({
+          ThemePreferences.themeModeKey: 'dark',
+        });
+
+    await tester.pumpWidget(
+      CosmoApp(
+        preferencesApi: RecordingPreferencesApi(),
+        authService: RecordingAuthService(initiallySignedIn: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(
       Theme.of(tester.element(find.byType(LandingPage))).brightness,
       Brightness.dark,
@@ -277,9 +314,8 @@ class RecordingPreferencesApi extends PreferencesApi {
 }
 
 class RecordingAuthService implements AuthService {
-  RecordingAuthService({required bool initiallySignedIn, Object? signInError})
-    : _isSignedIn = initiallySignedIn,
-      _signInError = signInError;
+  RecordingAuthService({required bool initiallySignedIn, this._signInError})
+    : _isSignedIn = initiallySignedIn;
 
   final StreamController<bool> _signedInChangesController =
       StreamController<bool>.broadcast();

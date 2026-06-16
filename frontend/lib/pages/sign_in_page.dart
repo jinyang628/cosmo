@@ -41,7 +41,7 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sign in to save your food preferences.',
+                    'Welcome to Cosmo!',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
