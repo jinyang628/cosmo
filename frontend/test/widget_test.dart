@@ -157,6 +157,8 @@ void main() {
   testWidgets('Landing page searches and displays nearby restaurants', (
     WidgetTester tester,
   ) async {
+    final openedRestaurantUris = <Uri>[];
+
     await tester.pumpWidget(
       MaterialApp(
         home: LandingPage(
@@ -178,9 +180,14 @@ void main() {
                 rating: 4.6,
                 userRatingCount: 120,
                 priceLevel: 'PRICE_LEVEL_MODERATE',
+                googleMapsUri: 'https://maps.google.com/?cid=restaurant-1',
               ),
             ],
           ),
+          launchRestaurantUri: (uri) async {
+            openedRestaurantUris.add(uri);
+            return true;
+          },
         ),
       ),
     );
@@ -195,6 +202,13 @@ void main() {
     expect(find.text('120 ratings'), findsOneWidget);
     expect(find.text(r'$$'), findsOneWidget);
     expect(find.text('Refresh'), findsOneWidget);
+
+    await tester.tap(find.text('Nourish Kitchen'));
+    await tester.pump();
+
+    expect(openedRestaurantUris, [
+      Uri.parse('https://maps.google.com/?cid=restaurant-1'),
+    ]);
   });
 
   test('API config throws when base URL is not configured', () {
