@@ -13,7 +13,7 @@ jobs:
     name: Check location of file changes
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }} 
+      backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -74,23 +74,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: '20'
+          channel: stable
+          cache: true
 
-      - name: Install dependencies
+      - name: Install Flutter dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: flutter pub get
 
-      - name: Run Prettier
+      - name: Create test environment file
         working-directory: ./frontend
-        run: npx prettier --check .
+        run: cp .env.example .env
 
-      - name: Run ESLint
+      - name: Check Dart formatting
         working-directory: ./frontend
-        run: npm run lint .
-      
-      - name: Build
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run Flutter analyzer
         working-directory: ./frontend
-        run: npm run build
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        working-directory: ./frontend
+        run: flutter test
