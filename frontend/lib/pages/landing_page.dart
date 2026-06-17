@@ -210,13 +210,9 @@ class _RestaurantTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final mapsUri = _restaurantMapsUri(restaurant);
-    final metadata = [
-      if (restaurant.rating case final rating?)
-        '${rating.toStringAsFixed(1)} star',
-      if (restaurant.userRatingCount case final count?) '$count ratings',
-      if (restaurant.priceLevel case final priceLevel?)
-        _formatPriceLevel(priceLevel),
-    ];
+    final metadata = _restaurantMetadata(restaurant);
+    final address =
+        restaurant.shortFormattedAddress ?? restaurant.formattedAddress;
 
     return Material(
       color: colorScheme.surface,
@@ -249,7 +245,7 @@ class _RestaurantTile extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (restaurant.formattedAddress case final address?) ...[
+              if (address != null) ...[
                 const SizedBox(height: 6),
                 Text(
                   address,
@@ -321,4 +317,38 @@ String _formatPriceLevel(String priceLevel) {
     'PRICE_LEVEL_VERY_EXPENSIVE' => r'$$$$',
     _ => priceLevel,
   };
+}
+
+List<String> _restaurantMetadata(Restaurant restaurant) {
+  final accessibility = restaurant.accessibilityOptions;
+  final price =
+      restaurant.priceRange ??
+      (restaurant.priceLevel == null
+          ? null
+          : _formatPriceLevel(restaurant.priceLevel!));
+  final primaryType = _displayablePrimaryType(restaurant);
+
+  return [
+    if (restaurant.openNow case final openNow?)
+      openNow ? 'Open now' : 'Closed now',
+    if (restaurant.rating case final rating?)
+      '${rating.toStringAsFixed(1)} star',
+    if (restaurant.userRatingCount case final count?) '$count ratings',
+    ?price,
+    ?primaryType,
+    if (accessibility?.wheelchairAccessibleEntrance == true)
+      'Accessible entrance',
+    if (accessibility?.wheelchairAccessibleSeating == true)
+      'Accessible seating',
+  ];
+}
+
+String? _displayablePrimaryType(Restaurant restaurant) {
+  final primaryTypeDisplayName = restaurant.primaryTypeDisplayName;
+  if (primaryTypeDisplayName == null ||
+      primaryTypeDisplayName == 'Restaurant') {
+    return null;
+  }
+
+  return primaryTypeDisplayName;
 }
