@@ -33,6 +33,13 @@ flutter run -d android # Obtain the android simulator ID
 flutter run -d <android_simulator_id>
 ```
 
+## Debug Android build
+
+```bash
+flutter clean
+flutter build apk --release
+```
+
 ## Debugging Tips
 
 1. Android build will fail if you dont have Android SDK installed. Install Android SDK and make sure that `frontend/android/local.properties` has `sdk.dir` defined
