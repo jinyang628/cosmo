@@ -5,12 +5,15 @@ from typing import Any
 
 import httpx
 
-from app.config.google_places import (GooglePlacesConfig,
-                                      GooglePlacesConfigError)
+from app.config.google_places import GooglePlacesConfig, GooglePlacesConfigError
 from app.models.preferences import DietPreference
-from app.models.restaurants import (NearbyRestaurantsRequest, Restaurant,
-                                    RestaurantAccessibilityOptions,
-                                    RestaurantAttribution, RestaurantLocation)
+from app.models.restaurants import (
+    NearbyRestaurantsRequest,
+    Restaurant,
+    RestaurantAccessibilityOptions,
+    RestaurantAttribution,
+    RestaurantLocation,
+)
 
 log = logging.getLogger(__name__)
 
