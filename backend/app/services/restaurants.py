@@ -110,7 +110,10 @@ class RestaurantsService:
         if not isinstance(places, list):
             raise RestaurantsSearchError("Google Places returned an invalid response")
 
-        return [restaurant for place in places if (restaurant := _parse_place(place))]
+        restaurants = [
+            restaurant for place in places if (restaurant := _parse_place(place))
+        ]
+        return [restaurant for restaurant in restaurants if restaurant.open_now is True]
 
 
 def _build_text_query(diet_preferences: list[DietPreference]) -> str:

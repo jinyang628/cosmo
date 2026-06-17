@@ -206,13 +206,14 @@ void main() {
     expect(find.text('Restaurants'), findsOneWidget);
     expect(find.text('Nourish Kitchen'), findsOneWidget);
     expect(find.text('Orchard Road'), findsOneWidget);
-    expect(find.text('Open now'), findsOneWidget);
+    expect(find.text('Open now'), findsNothing);
+    expect(find.text('Closed now'), findsNothing);
     expect(find.text('4.6 star'), findsOneWidget);
     expect(find.text('120 ratings'), findsOneWidget);
     expect(find.text(r'$10-$20'), findsOneWidget);
     expect(find.text('Vegetarian restaurant'), findsOneWidget);
-    expect(find.text('Accessible entrance'), findsOneWidget);
-    expect(find.text('Accessible seating'), findsOneWidget);
+    expect(find.text('Accessible entrance'), findsNothing);
+    expect(find.text('Accessible seating'), findsNothing);
     expect(find.text('Refresh'), findsOneWidget);
 
     await tester.tap(find.text('Nourish Kitchen'));

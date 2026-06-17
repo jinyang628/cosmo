@@ -320,7 +320,6 @@ String _formatPriceLevel(String priceLevel) {
 }
 
 List<String> _restaurantMetadata(Restaurant restaurant) {
-  final accessibility = restaurant.accessibilityOptions;
   final price =
       restaurant.priceRange ??
       (restaurant.priceLevel == null
@@ -329,17 +328,11 @@ List<String> _restaurantMetadata(Restaurant restaurant) {
   final primaryType = _displayablePrimaryType(restaurant);
 
   return [
-    if (restaurant.openNow case final openNow?)
-      openNow ? 'Open now' : 'Closed now',
     if (restaurant.rating case final rating?)
       '${rating.toStringAsFixed(1)} star',
     if (restaurant.userRatingCount case final count?) '$count ratings',
     ?price,
     ?primaryType,
-    if (accessibility?.wheelchairAccessibleEntrance == true)
-      'Accessible entrance',
-    if (accessibility?.wheelchairAccessibleSeating == true)
-      'Accessible seating',
   ];
 }
 
