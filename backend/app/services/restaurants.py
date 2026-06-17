@@ -1,16 +1,16 @@
 import logging
 import math
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 import httpx
 
-from app.config.google_places import GooglePlacesConfig, GooglePlacesConfigError
+from app.config.google_places import (GooglePlacesConfig,
+                                      GooglePlacesConfigError)
 from app.models.preferences import DietPreference
-from app.models.restaurants import (
-    NearbyRestaurantsRequest,
-    Restaurant,
-    RestaurantLocation,
-)
+from app.models.restaurants import (NearbyRestaurantsRequest, Restaurant,
+                                    RestaurantAccessibilityOptions,
+                                    RestaurantAttribution, RestaurantLocation)
 
 log = logging.getLogger(__name__)
 
@@ -23,19 +23,33 @@ class RestaurantsService:
     _text_search_url = "https://places.googleapis.com/v1/places:searchText"
     _field_mask = ",".join(
         [
+            "places.name",
             "places.id",
+            "places.attributions",
             "places.displayName",
             "places.formattedAddress",
+            "places.shortFormattedAddress",
             "places.location",
+            "places.types",
+            "places.primaryType",
+            "places.primaryTypeDisplayName",
+            "places.accessibilityOptions",
             "places.rating",
             "places.userRatingCount",
             "places.priceLevel",
+            "places.priceRange",
             "places.googleMapsUri",
+            "places.websiteUri",
             "places.businessStatus",
+            "places.currentOpeningHours",
+            "places.movedPlace",
+            "places.movedPlaceId",
         ]
     )
 
-    async def search_nearby_restaurants(self, input: NearbyRestaurantsRequest) -> list[Restaurant]:
+    async def search_nearby_restaurants(
+        self, input: NearbyRestaurantsRequest
+    ) -> list[Restaurant]:
         try:
             payload = {
                 "textQuery": _build_text_query(input.diet_preferences),
@@ -58,7 +72,8 @@ class RestaurantsService:
             raise RestaurantsSearchError("Google Places config error") from exc
         except Exception as exc:
             log.error(
-                "Unknown error occurred while building Google Places text search payload: %s", exc
+                "Unknown error occurred while building Google Places text search payload: %s",
+                exc,
             )
             raise RestaurantsSearchError(
                 "Unknown error occurred while building Google Places text search payload"
@@ -115,7 +130,9 @@ def _build_location_restriction(
         low_longitude = -180
         high_longitude = 180
     else:
-        longitude_delta = math.degrees(radius_meters / (earth_radius_meters * abs(latitude_cosine)))
+        longitude_delta = math.degrees(
+            radius_meters / (earth_radius_meters * abs(latitude_cosine))
+        )
         if longitude_delta >= 180:
             low_longitude = -180
             high_longitude = 180
@@ -156,17 +173,43 @@ def _parse_place(place: Any) -> Restaurant | None:
         return None
 
     location = _parse_location(place.get("location"))
+    current_opening_hours = _dict_or_none(place.get("currentOpeningHours"))
 
     return Restaurant(
         id=place_id,
         name=name,
+        resource_name=_string_or_none(place.get("name")),
         formatted_address=_string_or_none(place.get("formattedAddress")),
+        short_formatted_address=_string_or_none(place.get("shortFormattedAddress")),
         location=location,
+        types=_string_list(place.get("types")),
+        primary_type=_string_or_none(place.get("primaryType")),
+        primary_type_display_name=_localized_text_or_none(
+            place.get("primaryTypeDisplayName")
+        ),
         rating=_float_or_none(place.get("rating")),
         user_rating_count=_int_or_none(place.get("userRatingCount")),
         price_level=_string_or_none(place.get("priceLevel")),
+        price_range=_format_price_range(place.get("priceRange")),
         google_maps_uri=_string_or_none(place.get("googleMapsUri")),
+        website_uri=_string_or_none(place.get("websiteUri")),
         business_status=_string_or_none(place.get("businessStatus")),
+        open_now=(
+            _bool_or_none(current_opening_hours.get("openNow"))
+            if current_opening_hours
+            else None
+        ),
+        opening_hours_weekday_descriptions=_string_list(
+            current_opening_hours.get("weekdayDescriptions")
+            if current_opening_hours
+            else None
+        ),
+        accessibility_options=_parse_accessibility_options(
+            place.get("accessibilityOptions")
+        ),
+        attributions=_parse_attributions(place.get("attributions")),
+        moved_place=_string_or_none(place.get("movedPlace")),
+        moved_place_id=_string_or_none(place.get("movedPlaceId")),
     )
 
 
@@ -182,8 +225,119 @@ def _parse_location(value: Any) -> RestaurantLocation | None:
     return RestaurantLocation(latitude=latitude, longitude=longitude)
 
 
+def _parse_accessibility_options(value: Any) -> RestaurantAccessibilityOptions | None:
+    if not isinstance(value, dict):
+        return None
+
+    return RestaurantAccessibilityOptions(
+        wheelchair_accessible_parking=_bool_or_none(
+            value.get("wheelchairAccessibleParking")
+        ),
+        wheelchair_accessible_entrance=_bool_or_none(
+            value.get("wheelchairAccessibleEntrance")
+        ),
+        wheelchair_accessible_restroom=_bool_or_none(
+            value.get("wheelchairAccessibleRestroom")
+        ),
+        wheelchair_accessible_seating=_bool_or_none(
+            value.get("wheelchairAccessibleSeating")
+        ),
+    )
+
+
+def _parse_attributions(value: Any) -> list[RestaurantAttribution]:
+    if not isinstance(value, list):
+        return []
+
+    attributions: list[RestaurantAttribution] = []
+    for item in value:
+        if isinstance(item, dict):
+            attributions.append(
+                RestaurantAttribution(
+                    display_name=_string_or_none(item.get("displayName")),
+                    uri=_string_or_none(item.get("uri")),
+                    photo_uri=_string_or_none(item.get("photoUri")),
+                )
+            )
+
+    return attributions
+
+
+def _localized_text_or_none(value: Any) -> str | None:
+    if not isinstance(value, dict):
+        return None
+
+    return _string_or_none(value.get("text"))
+
+
+def _format_price_range(value: Any) -> str | None:
+    if not isinstance(value, dict):
+        return None
+
+    start_price = _format_money(value.get("startPrice"))
+    end_price = _format_money(value.get("endPrice"))
+    if start_price and end_price:
+        return f"{start_price}-{end_price}"
+    if start_price:
+        return f"{start_price}+"
+    if end_price:
+        return f"Up to {end_price}"
+
+    return None
+
+
+def _format_money(value: Any) -> str | None:
+    if not isinstance(value, dict):
+        return None
+
+    currency_code = _string_or_none(value.get("currencyCode"))
+    units = value.get("units", "0")
+    nanos = _int_or_none(value.get("nanos")) or 0
+    try:
+        amount = Decimal(str(units)) + (Decimal(nanos) / Decimal("1000000000"))
+    except (InvalidOperation, ValueError):
+        return None
+
+    amount_text = f"{amount:,.2f}".rstrip("0").rstrip(".")
+    currency_prefix = _currency_prefix(currency_code)
+    if currency_prefix:
+        return f"{currency_prefix}{amount_text}"
+    if currency_code:
+        return f"{currency_code} {amount_text}"
+
+    return amount_text
+
+
+def _currency_prefix(currency_code: str | None) -> str | None:
+    return {
+        "AUD": "A$",
+        "CAD": "C$",
+        "EUR": "EUR ",
+        "GBP": "GBP ",
+        "HKD": "HK$",
+        "JPY": "JPY ",
+        "SGD": "S$",
+        "USD": "$",
+    }.get(currency_code or "")
+
+
+def _dict_or_none(value: Any) -> dict | None:
+    return value if isinstance(value, dict) else None
+
+
 def _string_or_none(value: Any) -> str | None:
     return value if isinstance(value, str) else None
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+
+    return [item for item in value if isinstance(item, str)]
+
+
+def _bool_or_none(value: Any) -> bool | None:
+    return value if isinstance(value, bool) else None
 
 
 def _float_or_none(value: Any) -> float | None:

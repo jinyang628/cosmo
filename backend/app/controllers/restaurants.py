@@ -40,5 +40,9 @@ class RestaurantsController:
                 ) from exc
 
             return JSONResponse(
-                content={"restaurants": [restaurant.model_dump() for restaurant in restaurants]}
+                content={
+                    "restaurants": [
+                        restaurant.model_dump() for restaurant in restaurants
+                    ]
+                }
             )

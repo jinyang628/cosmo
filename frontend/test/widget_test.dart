@@ -177,10 +177,18 @@ void main() {
                 id: 'restaurant-1',
                 name: 'Nourish Kitchen',
                 formattedAddress: '12 Orchard Road',
+                shortFormattedAddress: 'Orchard Road',
+                primaryTypeDisplayName: 'Vegetarian restaurant',
                 rating: 4.6,
                 userRatingCount: 120,
                 priceLevel: 'PRICE_LEVEL_MODERATE',
+                priceRange: r'$10-$20',
                 googleMapsUri: 'https://maps.google.com/?cid=restaurant-1',
+                openNow: true,
+                accessibilityOptions: RestaurantAccessibilityOptions(
+                  wheelchairAccessibleEntrance: true,
+                  wheelchairAccessibleSeating: true,
+                ),
               ),
             ],
           ),
@@ -197,10 +205,14 @@ void main() {
 
     expect(find.text('Restaurants'), findsOneWidget);
     expect(find.text('Nourish Kitchen'), findsOneWidget);
-    expect(find.text('12 Orchard Road'), findsOneWidget);
+    expect(find.text('Orchard Road'), findsOneWidget);
+    expect(find.text('Open now'), findsOneWidget);
     expect(find.text('4.6 star'), findsOneWidget);
     expect(find.text('120 ratings'), findsOneWidget);
-    expect(find.text(r'$$'), findsOneWidget);
+    expect(find.text(r'$10-$20'), findsOneWidget);
+    expect(find.text('Vegetarian restaurant'), findsOneWidget);
+    expect(find.text('Accessible entrance'), findsOneWidget);
+    expect(find.text('Accessible seating'), findsOneWidget);
     expect(find.text('Refresh'), findsOneWidget);
 
     await tester.tap(find.text('Nourish Kitchen'));
