@@ -17,6 +17,7 @@ import 'package:frontend/pages/landing_page.dart';
 import 'package:frontend/pages/sign_in_page.dart';
 import 'package:frontend/preferences/diet_preference.dart';
 import 'package:frontend/preferences/preferences_api.dart';
+import 'package:frontend/preferences/sex.dart';
 import 'package:frontend/preferences/user_preferences.dart';
 import 'package:frontend/restaurants/restaurant.dart';
 import 'package:frontend/restaurants/restaurants_api.dart';
@@ -42,9 +43,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome to Cosmo'), findsOneWidget);
+    expect(find.text('What can Cosmo call you?'), findsOneWidget);
+    expect(find.text('How old are you?'), findsOneWidget);
+    expect(find.text('Sex'), findsOneWidget);
 
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
+    await _completeBasicProfile(tester);
 
     expect(find.text('Distance'), findsOneWidget);
     expect(find.text('Budget'), findsOneWidget);
@@ -78,6 +81,13 @@ void main() {
       preferencesApi.savedPreferences.single.dietPreferences,
       contains(DietPreference.vegan),
     );
+    expect(preferencesApi.savedPreferences.single.name, 'Elkan');
+    expect(preferencesApi.savedPreferences.single.age, 34);
+    expect(preferencesApi.savedPreferences.single.sex, Sex.female);
+    expect(preferencesApi.savedPreferences.single.healthConditions, [
+      'High BP',
+      'Tree nut allergy',
+    ]);
     expect(find.byType(LandingPage), findsOneWidget);
   });
 
@@ -198,8 +208,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
+    await _completeBasicProfile(tester);
 
     final distanceSlider = tester.widget<Slider>(find.byType(Slider).first);
     distanceSlider.onChanged!(2700.0000000000005);
@@ -367,6 +376,23 @@ void main() {
     expect(find.textContaining('bad_jwt'), findsNothing);
     expect(find.textContaining('leaked API details'), findsNothing);
   });
+}
+
+Future<void> _completeBasicProfile(WidgetTester tester) async {
+  await tester.enterText(find.byType(TextFormField).at(0), 'Elkan');
+  await tester.enterText(find.byType(TextFormField).at(1), '34');
+  await tester.tap(find.text(Sex.female.label));
+  await tester.scrollUntilVisible(
+    find.text('High BP'),
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.tap(find.text('High BP'));
+  await tester.enterText(find.byType(TextFormField).last, 'Tree nut allergy');
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
 }
 
 class FakeLocationService implements LocationService {

@@ -10,7 +10,20 @@ class DietPreference(StrEnum):
     pescatarian = "pescatarian"
 
 
+class Sex(StrEnum):
+    male = "Male"
+    female = "Female"
+    prefer_not_to_say = "Prefer not to say"
+
+
 class PreferencesRequest(BaseModel):
+    name: str = Field(min_length=1, description="The user's display name.")
+    age: int = Field(ge=1, le=120, description="The user's age in years.")
+    sex: Sex = Field(description="The user's sex.")
+    health_conditions: list[str] = Field(
+        default_factory=list,
+        description="Health conditions to factor into recommendations.",
+    )
     distance_meters: int = Field(
         ge=100,
         le=10000,

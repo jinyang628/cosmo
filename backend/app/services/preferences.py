@@ -25,6 +25,10 @@ class PreferencesService:
     async def save_preferences(self, input: PreferencesRequest, user_id: str) -> None:
         payload = {
             "user_id": user_id,
+            "name": input.name,
+            "age": input.age,
+            "sex": input.sex.value,
+            "health_conditions": input.health_conditions,
             "distance_meters": input.distance_meters,
             "budget_level": input.budget_level,
             "diet_preferences": [

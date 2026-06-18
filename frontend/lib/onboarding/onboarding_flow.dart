@@ -2,15 +2,27 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../preferences/sex.dart';
 import '../preferences/diet_preference.dart';
 import '../preferences/preference_questions.dart';
+import 'basic_profile_questions.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
+    required this.name,
+    required this.age,
+    required this.sex,
+    required this.selectedHealthConditions,
+    required this.otherHealthCondition,
     required this.budgetLevel,
     required this.dietOptions,
     required this.distanceMeters,
     required this.selectedDiets,
+    required this.onNameChanged,
+    required this.onAgeChanged,
+    required this.onSexChanged,
+    required this.onHealthConditionToggled,
+    required this.onOtherHealthConditionChanged,
     required this.onBudgetChanged,
     required this.onDietToggled,
     required this.onDistanceChanged,
@@ -18,10 +30,20 @@ class OnboardingFlow extends StatefulWidget {
     super.key,
   });
 
+  final String name;
+  final String age;
+  final Sex sex;
+  final Set<String> selectedHealthConditions;
+  final String otherHealthCondition;
   final int budgetLevel;
   final List<DietPreference> dietOptions;
   final double distanceMeters;
   final Set<DietPreference> selectedDiets;
+  final ValueChanged<String> onNameChanged;
+  final ValueChanged<String> onAgeChanged;
+  final ValueChanged<Sex> onSexChanged;
+  final ValueChanged<String> onHealthConditionToggled;
+  final ValueChanged<String> onOtherHealthConditionChanged;
   final ValueChanged<int> onBudgetChanged;
   final ValueChanged<DietPreference> onDietToggled;
   final ValueChanged<double> onDistanceChanged;
@@ -41,6 +63,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLastStep = _stepIndex == _stepCount - 1;
+    final canContinue = _stepIndex != 0 || _hasValidBasicProfile;
 
     return SafeArea(
       child: Column(
@@ -71,11 +94,18 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             child: IndexedStack(
               index: _stepIndex,
               children: [
-                const _DummyOnboardingStep(
-                  icon: Icons.explore_outlined,
-                  title: 'Welcome to Cosmo',
-                  body:
-                      'A few quick choices help Cosmo tune restaurant ideas around your day.',
+                BasicProfileQuestions(
+                  name: widget.name,
+                  age: widget.age,
+                  sex: widget.sex,
+                  selectedHealthConditions: widget.selectedHealthConditions,
+                  otherHealthCondition: widget.otherHealthCondition,
+                  onNameChanged: widget.onNameChanged,
+                  onAgeChanged: widget.onAgeChanged,
+                  onSexChanged: widget.onSexChanged,
+                  onHealthConditionToggled: widget.onHealthConditionToggled,
+                  onOtherHealthConditionChanged:
+                      widget.onOtherHealthConditionChanged,
                 ),
                 ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -148,7 +178,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           )
                         : Icon(isLastStep ? Icons.check : Icons.arrow_forward),
                     label: Text(isLastStep ? 'Finish' : 'Next'),
-                    onPressed: _isCompleting
+                    onPressed: _isCompleting || !canContinue
                         ? null
                         : () {
                             if (isLastStep) {
@@ -177,6 +207,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
 
     setState(() => _isCompleting = false);
+  }
+
+  bool get _hasValidBasicProfile {
+    final parsedAge = int.tryParse(widget.age);
+    return widget.name.trim().isNotEmpty &&
+        parsedAge != null &&
+        parsedAge >= 1 &&
+        parsedAge <= 120;
   }
 }
 

@@ -6,6 +6,7 @@ import '../onboarding/onboarding_flow.dart';
 import '../pages/landing_page.dart';
 import '../preferences/diet_preference.dart';
 import '../preferences/preferences_api.dart';
+import '../preferences/sex.dart';
 import '../preferences/user_preferences.dart';
 import '../restaurants/restaurants_api.dart';
 import '../settings/settings_drawer.dart';
@@ -33,10 +34,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _name = '';
+  String _age = '';
+  Sex _sex = Sex.preferNotToSay;
+  String _otherHealthCondition = '';
   double _distanceMeters = 1000;
   int _budgetLevel = 2;
   bool _isCheckingOnboarding = true;
   bool _isOnboardingVisible = false;
+  final Set<String> _selectedHealthConditions = <String>{};
   final Set<DietPreference> _selectedDiets = <DietPreference>{};
 
   @override
@@ -51,10 +57,51 @@ class _HomeScreenState extends State<HomeScreen> {
         ? const _OnboardingStatusLoader()
         : _isOnboardingVisible
         ? OnboardingFlow(
+            name: _name,
+            age: _age,
+            sex: _sex,
+            selectedHealthConditions: _selectedHealthConditions,
+            otherHealthCondition: _otherHealthCondition,
             budgetLevel: _budgetLevel,
             dietOptions: dietPreferences,
             distanceMeters: _distanceMeters,
             selectedDiets: _selectedDiets,
+            onNameChanged: (value) {
+              setState(() => _name = value);
+            },
+            onAgeChanged: (value) {
+              setState(() => _age = value);
+            },
+            onSexChanged: (value) {
+              setState(() => _sex = value);
+            },
+            onHealthConditionToggled: (condition) {
+              setState(() {
+                if (condition == 'None') {
+                  if (!_selectedHealthConditions.add(condition)) {
+                    _selectedHealthConditions.remove(condition);
+                  } else {
+                    _selectedHealthConditions
+                      ..clear()
+                      ..add(condition);
+                  }
+                  return;
+                }
+
+                _selectedHealthConditions.remove('None');
+                if (!_selectedHealthConditions.add(condition)) {
+                  _selectedHealthConditions.remove(condition);
+                }
+              });
+            },
+            onOtherHealthConditionChanged: (value) {
+              setState(() {
+                _otherHealthCondition = value;
+                if (value.trim().isNotEmpty) {
+                  _selectedHealthConditions.remove('None');
+                }
+              });
+            },
             onBudgetChanged: (value) {
               setState(() => _budgetLevel = value);
             },
@@ -138,6 +185,10 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await widget.preferencesApi.savePreferences(
         UserPreferences(
+          name: _name.trim(),
+          age: int.parse(_age),
+          sex: _sex,
+          healthConditions: _healthConditions,
           distanceMeters: _distanceMeters.round(),
           budgetLevel: _budgetLevel,
           dietPreferences: _selectedDiets,
@@ -157,6 +208,16 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return false;
     }
+  }
+
+  List<String> get _healthConditions {
+    final conditions = _selectedHealthConditions.toList()..sort();
+    final otherCondition = _otherHealthCondition.trim();
+    if (otherCondition.isNotEmpty) {
+      conditions.add(otherCondition);
+    }
+
+    return conditions;
   }
 }
 
