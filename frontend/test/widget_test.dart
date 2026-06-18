@@ -81,6 +81,31 @@ void main() {
     expect(find.byType(LandingPage), findsOneWidget);
   });
 
+  testWidgets('Shows loader while onboarding status is loading', (
+    WidgetTester tester,
+  ) async {
+    final hasOnboardedCompleter = Completer<bool>();
+    await tester.pumpWidget(
+      CosmoApp(
+        preferencesApi: RecordingPreferencesApi(
+          hasOnboardedCompleter: hasOnboardedCompleter,
+        ),
+        authService: RecordingAuthService(initiallySignedIn: true),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(LandingPage), findsNothing);
+    expect(find.text('Welcome to Cosmo'), findsNothing);
+
+    hasOnboardedCompleter.complete(false);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('Welcome to Cosmo'), findsOneWidget);
+  });
+
   testWidgets('Settings drawer toggles dark mode', (WidgetTester tester) async {
     await tester.pumpWidget(
       CosmoApp(
@@ -370,14 +395,22 @@ class FakeRestaurantsApi extends RestaurantsApi {
 }
 
 class RecordingPreferencesApi extends PreferencesApi {
-  RecordingPreferencesApi({this.hasOnboardedResult = true})
-    : super(baseUrl: '');
+  RecordingPreferencesApi({
+    this.hasOnboardedResult = true,
+    this.hasOnboardedCompleter,
+  }) : super(baseUrl: '');
 
   final List<UserPreferences> savedPreferences = [];
   final bool hasOnboardedResult;
+  final Completer<bool>? hasOnboardedCompleter;
 
   @override
   Future<bool> hasOnboarded() async {
+    final completer = hasOnboardedCompleter;
+    if (completer != null) {
+      return completer.future;
+    }
+
     return hasOnboardedResult;
   }
 

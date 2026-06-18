@@ -35,6 +35,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   double _distanceMeters = 1000;
   int _budgetLevel = 2;
+  bool _isCheckingOnboarding = true;
   bool _isOnboardingVisible = false;
   final Set<DietPreference> _selectedDiets = <DietPreference>{};
 
@@ -46,7 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final body = _isOnboardingVisible
+    final body = _isCheckingOnboarding
+        ? const _OnboardingStatusLoader()
+        : _isOnboardingVisible
         ? OnboardingFlow(
             budgetLevel: _budgetLevel,
             dietOptions: dietPreferences,
@@ -99,11 +102,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _checkOnboardingStatus() async {
     try {
       final hasOnboarded = await widget.preferencesApi.hasOnboarded();
-      if (!mounted || hasOnboarded) {
+      if (!mounted) {
         return;
       }
 
-      setState(() => _isOnboardingVisible = true);
+      setState(() {
+        _isCheckingOnboarding = false;
+        _isOnboardingVisible = !hasOnboarded;
+      });
     } catch (error, stackTrace) {
       debugPrint('HomeScreen: could not check onboarding status: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -115,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not check onboarding status')),
       );
+      setState(() => _isCheckingOnboarding = false);
     }
   }
 
@@ -150,5 +157,14 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return false;
     }
+  }
+}
+
+class _OnboardingStatusLoader extends StatelessWidget {
+  const _OnboardingStatusLoader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: CircularProgressIndicator());
   }
 }
