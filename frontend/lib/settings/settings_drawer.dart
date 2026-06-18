@@ -4,6 +4,7 @@ class SettingsDrawer extends StatelessWidget {
   const SettingsDrawer({
     required this.isDarkMode,
     required this.onDarkModeChanged,
+    required this.onRedoOnboarding,
     required this.onSignOut,
     this.userEmail,
     super.key,
@@ -12,6 +13,7 @@ class SettingsDrawer extends StatelessWidget {
   final bool isDarkMode;
   final String? userEmail;
   final ValueChanged<bool> onDarkModeChanged;
+  final VoidCallback onRedoOnboarding;
   final Future<void> Function() onSignOut;
 
   @override
@@ -67,6 +69,14 @@ class SettingsDrawer extends StatelessWidget {
               secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
               value: isDarkMode,
               onChanged: onDarkModeChanged,
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('Redo onboarding'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onRedoOnboarding();
+              },
             ),
           ],
         ),

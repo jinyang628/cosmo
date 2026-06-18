@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../preferences/diet_preference.dart';
+import 'diet_preference.dart';
 
-class PreferencesPage extends StatelessWidget {
-  const PreferencesPage({
+class PreferenceQuestions extends StatelessWidget {
+  const PreferenceQuestions({
     required this.budgetLevel,
     required this.dietOptions,
     required this.distanceMeters,
@@ -24,68 +24,51 @@ class PreferencesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        children: [
-          Text(
-            'Preferences',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+    return Column(
+      children: [
+        PreferenceSection(
+          title: 'Distance',
+          value: formatDistance(distanceMeters),
+          child: Slider(
+            value: distanceMeters,
+            min: 100,
+            max: 10000,
+            divisions: 99,
+            label: formatDistance(distanceMeters),
+            onChanged: onDistanceChanged,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Tune how far, how fancy, and what kind of healthy food Cosmo should recommend.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+        ),
+        const SizedBox(height: 20),
+        PreferenceSection(
+          title: 'Budget',
+          value: budgetLabel(budgetLevel),
+          child: Slider(
+            value: budgetLevel.toDouble(),
+            min: 1,
+            max: 4,
+            divisions: 3,
+            label: budgetLabel(budgetLevel),
+            onChanged: (value) => onBudgetChanged(value.round()),
           ),
-          const SizedBox(height: 28),
-          PreferenceSection(
-            title: 'Distance',
-            value: formatDistance(distanceMeters),
-            child: Slider(
-              value: distanceMeters,
-              min: 100,
-              max: 10000,
-              divisions: 99,
-              label: formatDistance(distanceMeters),
-              onChanged: onDistanceChanged,
-            ),
+        ),
+        const SizedBox(height: 20),
+        PreferenceSection(
+          title: 'Diet',
+          value: formatDietSelection(selectedDiets),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final option in dietOptions)
+                FilterChip(
+                  label: Text(option.label),
+                  selected: selectedDiets.contains(option),
+                  onSelected: (_) => onDietToggled(option),
+                ),
+            ],
           ),
-          const SizedBox(height: 20),
-          PreferenceSection(
-            title: 'Budget',
-            value: budgetLabel(budgetLevel),
-            child: Slider(
-              value: budgetLevel.toDouble(),
-              min: 1,
-              max: 4,
-              divisions: 3,
-              label: budgetLabel(budgetLevel),
-              onChanged: (value) => onBudgetChanged(value.round()),
-            ),
-          ),
-          const SizedBox(height: 20),
-          PreferenceSection(
-            title: 'Diet',
-            value: formatDietSelection(selectedDiets),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final option in dietOptions)
-                  FilterChip(
-                    label: Text(option.label),
-                    selected: selectedDiets.contains(option),
-                    onSelected: (_) => onDietToggled(option),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

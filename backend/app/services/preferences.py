@@ -14,7 +14,14 @@ class PreferencesSaveError(RuntimeError):
     pass
 
 
+class PreferencesStatusError(RuntimeError):
+    pass
+
+
 class PreferencesService:
+    async def has_preferences(self, user_id: str) -> bool:
+        return await run_in_threadpool(self._has_preferences, user_id=user_id)
+
     async def save_preferences(self, input: PreferencesRequest, user_id: str) -> None:
         payload = {
             "user_id": user_id,
@@ -39,3 +46,19 @@ class PreferencesService:
         except APIError as exc:
             log.error(exc)
             raise PreferencesSaveError(str(exc)) from exc
+
+    def _has_preferences(self, user_id: str) -> bool:
+        try:
+            response = (
+                get_supabase_service_client()
+                .table("preferences")
+                .select("user_id")
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+        except APIError as exc:
+            log.error(exc)
+            raise PreferencesStatusError(str(exc)) from exc
+
+        return bool(response.data)

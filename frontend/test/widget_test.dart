@@ -29,20 +29,21 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
-  testWidgets('Preferences page shows food recommendation controls', (
+  testWidgets('Onboarding step 2 shows food recommendation controls', (
     WidgetTester tester,
   ) async {
-    final preferencesApi = RecordingPreferencesApi();
+    final preferencesApi = RecordingPreferencesApi(hasOnboardedResult: false);
     await tester.pumpWidget(
       CosmoApp(
         preferencesApi: preferencesApi,
         authService: RecordingAuthService(initiallySignedIn: true),
       ),
     );
+    await tester.pumpAndSettle();
 
-    expect(find.byType(LandingPage), findsOneWidget);
+    expect(find.text('Welcome to Cosmo'), findsOneWidget);
 
-    await tester.tap(find.text('Preferences').last);
+    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
     expect(find.text('Distance'), findsOneWidget);
@@ -65,11 +66,19 @@ void main() {
 
     final veganChip = tester.widget<FilterChip>(veganChipFinder);
     expect(veganChip.selected, isTrue);
+    expect(preferencesApi.savedPreferences, isEmpty);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finish'));
+    await tester.pumpAndSettle();
+
     expect(preferencesApi.savedPreferences, hasLength(1));
     expect(
       preferencesApi.savedPreferences.single.dietPreferences,
       contains(DietPreference.vegan),
     );
+    expect(find.byType(LandingPage), findsOneWidget);
   });
 
   testWidgets('Settings drawer toggles dark mode', (WidgetTester tester) async {
@@ -79,6 +88,7 @@ void main() {
         authService: RecordingAuthService(initiallySignedIn: true),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(
       Theme.of(tester.element(find.byType(LandingPage))).brightness,
@@ -107,6 +117,28 @@ void main() {
     );
   });
 
+  testWidgets('Settings drawer can restart onboarding', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      CosmoApp(
+        preferencesApi: RecordingPreferencesApi(),
+        authService: RecordingAuthService(initiallySignedIn: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LandingPage), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Open navigation menu'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Redo onboarding'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome to Cosmo'), findsOneWidget);
+  });
+
   testWidgets('App starts with persisted dark mode', (
     WidgetTester tester,
   ) async {
@@ -132,19 +164,27 @@ void main() {
   testWidgets('Distance slider saves whole meters', (
     WidgetTester tester,
   ) async {
-    final preferencesApi = RecordingPreferencesApi();
+    final preferencesApi = RecordingPreferencesApi(hasOnboardedResult: false);
     await tester.pumpWidget(
       CosmoApp(
         preferencesApi: preferencesApi,
         authService: RecordingAuthService(initiallySignedIn: true),
       ),
     );
+    await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Preferences').last);
+    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
     final distanceSlider = tester.widget<Slider>(find.byType(Slider).first);
     distanceSlider.onChanged!(2700.0000000000005);
+    await tester.pumpAndSettle();
+
+    expect(preferencesApi.savedPreferences, isEmpty);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finish'));
     await tester.pumpAndSettle();
 
     expect(preferencesApi.savedPreferences.single.distanceMeters, 2700);
@@ -330,9 +370,16 @@ class FakeRestaurantsApi extends RestaurantsApi {
 }
 
 class RecordingPreferencesApi extends PreferencesApi {
-  RecordingPreferencesApi() : super(baseUrl: '');
+  RecordingPreferencesApi({this.hasOnboardedResult = true})
+    : super(baseUrl: '');
 
   final List<UserPreferences> savedPreferences = [];
+  final bool hasOnboardedResult;
+
+  @override
+  Future<bool> hasOnboarded() async {
+    return hasOnboardedResult;
+  }
 
   @override
   Future<void> savePreferences(UserPreferences preferences) async {

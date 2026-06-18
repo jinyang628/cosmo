@@ -12,6 +12,42 @@ class PreferencesApi {
 
   final String? baseUrl;
 
+  Future<bool> hasOnboarded() async {
+    debugPrint('PreferencesApi: checking onboarding status');
+
+    try {
+      final resolvedBaseUrl = baseUrl ?? ApiConfig.apiBaseUrl;
+      final accessToken = await _currentAccessToken;
+      final response = await http.get(
+        Uri.parse('$resolvedBaseUrl/api/v1/preferences/status'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      debugPrint(
+        'PreferencesApi: onboarding status response ${response.statusCode}',
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw PreferencesApiException(
+          'Failed to load preferences status with status ${response.statusCode}: ${response.body}',
+        );
+      }
+
+      final payload = jsonDecode(response.body);
+      if (payload case {'has_preferences': final bool hasPreferences}) {
+        return hasPreferences;
+      }
+
+      throw const PreferencesApiException(
+        'Preferences status response was malformed',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('PreferencesApi: could not check onboarding status: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
   Future<void> savePreferences(UserPreferences preferences) async {
     debugPrint('PreferencesApi: saving preferences');
 
